@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://cdn.discordapp.com/attachments/833492504028381184/1458668171690115176/banner2.png?ex=69607a18&is=695f2898&hm=649410b9a3784bbd025e340ec037ea6871c210b26b2a5bfc4bda7db50025f0b0" alt="Banner EcoScan"/>
+</p>
+
 # 🌱 EcoScan
 
 > **Educação ambiental na palma da mão.**  
