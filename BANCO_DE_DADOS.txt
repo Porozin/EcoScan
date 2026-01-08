@@ -1,0 +1,39 @@
+-- COPIE A PARTIR DA LINHA ABAIXO --
+
+-- 1. Criar a tabela de Scans (Histórico de Reciclagem)
+CREATE TABLE IF NOT EXISTS public.scans (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  item_name TEXT NOT NULL,
+  material TEXT,
+  recyclability TEXT,
+  disposal_advice TEXT,
+  confidence DOUBLE PRECISION,
+  image_url TEXT
+);
+
+-- 2. Ativar a Segurança de Nível de Linha (RLS)
+-- Isso impede que um usuário acesse os dados de outro
+ALTER TABLE public.scans ENABLE ROW LEVEL SECURITY;
+
+-- 3. Criar Políticas de Acesso
+-- Permite que o usuário insira seus próprios scans
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Users can insert their own scans') THEN
+        CREATE POLICY "Users can insert their own scans"
+        ON public.scans FOR INSERT
+        WITH CHECK (auth.uid() = user_id);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'Users can view their own scans') THEN
+        CREATE POLICY "Users can view their own scans"
+        ON public.scans FOR SELECT
+        USING (auth.uid() = user_id);
+    END IF;
+END $$;
+
+-- 4. Instrução Final:
+-- Após colar e clicar em 'RUN', sua tabela 'scans' estará pronta 
+-- para receber os dados do EcoScan Mossoró.

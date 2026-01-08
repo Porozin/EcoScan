@@ -1,0 +1,8 @@
+{
+  "name": "EcoScan",
+  "description": "SuperApp de sustentabilidade para Mossoró. Escaneie resíduos com IA para determinar a reciclabilidade e localize ecopontos locais.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
