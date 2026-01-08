@@ -33,10 +33,14 @@ Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada
 
 ## 🚀 Funcionalidades Principais
 
+<p align="center">
+  <img src="https://media.discordapp.net/attachments/833492504028381184/1458673600801538212/28_Sem_Titulo_20260108010635.jpg?ex=69607f27&is=695f2da7&hm=e61982578542eff8e3e4f07d592b37ca6b031fbbfbfb340b79dc68875812739b&=&format=webp&width=400&height=866" alt="Banner EcoScan"/>
+</p>
 ### 📷 Escaneamento Inteligente
 - Análise de imagens de resíduos por meio de **IA**
 - Identificação automática do tipo de material
 - Informações sobre composição, impacto ambiental e sensibilidade
+
 
 ### 🧭 Mapa de Ecopontos
 - Visualização de pontos de descarte no **Rio Grande do Norte**
