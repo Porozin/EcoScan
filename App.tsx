@@ -9,12 +9,34 @@ import AboutScreen from './screens/AboutScreen';
 import { Leaf } from 'lucide-react';
 import { supabase, saveScan, getUserScans } from './services/supabaseClient';
 
+import { App as CapApp } from '@capacitor/app';
+
+// ... (imports)
+
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('scanner');
   const [history, setHistory] = useState<ScanResult[]>([]);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    // Configurar listener para Deep Links (Redirecionamento de Auth)
+    CapApp.addListener('appUrlOpen', (data) => {
+      // O Supabase detecta a sessão via URL hash automaticamente, 
+      // mas precisamos garantir que o listener esteja ativo e logar para debug.
+      console.log('App aberto via URL:', data.url);
+
+      // Em alguns casos específicos, pode ser necessário extrair tokens manualmente,
+      // mas na maioria das vezes o getSession() ou onAuthStateChange capturam 
+      // assim que o app volta para o foreground.
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          console.log('Sessão recuperada após Deep Link');
+          setUser(session.user);
+          loadUserHistory(session.user.id);
+        }
+      });
+    });
+
     // Monitora mudanças na sessão
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -26,7 +48,10 @@ const App: React.FC = () => {
       if (session?.user) loadUserHistory(session.user.id);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      CapApp.removeAllListeners();
+    };
   }, []);
 
   const loadUserHistory = async (userId: string) => {

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { ScanResult } from '../types';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Utilitário para buscar variáveis de ambiente de forma segura no navegador.
@@ -11,7 +12,7 @@ const getEnvVar = (key: string): string => {
   // @ts-ignore
   const metaVar = import.meta.env?.[key];
   const procVar = process.env?.[key];
-  
+
   return viteVar || metaVar || procVar || '';
 };
 
@@ -37,10 +38,18 @@ export const supabase = createClient(
 export const signInWithGoogle = async () => {
   if (!supabaseUrl) return alert("Erro: Configuração do Supabase ausente.");
   try {
+    const isNative = Capacitor.isNativePlatform();
+    const redirectTo = isNative
+      ? 'com.ecoscan.app://callback'
+      : window.location.origin;
+
+    console.log(`Iniciando login Google. Redirecionar para: ${redirectTo}`);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        redirectTo,
+        skipBrowserRedirect: isNative,
       },
     });
     if (error) throw error;
@@ -89,7 +98,7 @@ export const getUserScans = async (userId: string) => {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    
+
     if (error) throw error;
     return data || [];
   } catch (err) {
