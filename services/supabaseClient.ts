@@ -35,6 +35,10 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-key'
 );
 
+import { Browser } from '@capacitor/browser';
+
+// ... (imports existentes)
+
 export const signInWithGoogle = async () => {
   if (!supabaseUrl) return alert("Erro: Configuração do Supabase ausente.");
   try {
@@ -43,18 +47,26 @@ export const signInWithGoogle = async () => {
       ? 'com.ecoscan.app://callback'
       : window.location.origin;
 
-    console.log(`Iniciando login Google. Redirecionar para: ${redirectTo}`);
+    console.log(`Iniciando login Google. Native: ${isNative}, Redirect: ${redirectTo}`);
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
         skipBrowserRedirect: isNative,
       },
     });
+
     if (error) throw error;
+
+    if (isNative && data?.url) {
+      console.log('Abrindo URL de Auth:', data.url);
+      await Browser.open({ url: data.url });
+    }
+
   } catch (error: any) {
     console.error('Erro ao entrar com Google:', error.message);
+    alert('Erro ao iniciar login: ' + error.message);
   }
 };
 

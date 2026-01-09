@@ -20,21 +20,43 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Configurar listener para Deep Links (Redirecionamento de Auth)
-    CapApp.addListener('appUrlOpen', (data) => {
-      // O Supabase detecta a sessão via URL hash automaticamente, 
-      // mas precisamos garantir que o listener esteja ativo e logar para debug.
+    CapApp.addListener('appUrlOpen', async (data) => {
       console.log('App aberto via URL:', data.url);
 
-      // Em alguns casos específicos, pode ser necessário extrair tokens manualmente,
-      // mas na maioria das vezes o getSession() ou onAuthStateChange capturam 
-      // assim que o app volta para o foreground.
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          console.log('Sessão recuperada após Deep Link');
-          setUser(session.user);
-          loadUserHistory(session.user.id);
+      try {
+        // Tenta extrair tokens da URL (pode vir como hash # ou query ?)
+        const urlObj = new URL(data.url);
+
+        // Verifica hash e query params para cobrir diferentes retornos
+        const paramsHash = new URLSearchParams(urlObj.hash.substring(1)); // Remove o #
+        const paramsQuery = new URLSearchParams(urlObj.search);
+
+        const accessToken = paramsHash.get('access_token') || paramsQuery.get('access_token');
+        const refreshToken = paramsHash.get('refresh_token') || paramsQuery.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          console.log("Tokens encontrados na URL! Configurando sessão...");
+          const { data: sessionData, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (error) throw error;
+
+          if (sessionData.session?.user) {
+            console.log('Login via Deep Link SUCESSO!');
+            setUser(sessionData.session.user);
+            loadUserHistory(sessionData.session.user.id);
+          }
+        } else {
+          console.log("Nenhum token encontrado na URL. Tentando getSession normal...");
+          // Fallback: Tenta deixar o Supabase detectar sozinho, caso venha de outra forma
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) setUser(session.user);
         }
-      });
+      } catch (err: any) {
+        console.error("Erro ao processar Deep Link:", err.message);
+      }
     });
 
     // Monitora mudanças na sessão
@@ -114,7 +136,7 @@ const App: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-gray-900 flex justify-center overflow-hidden">
-      <div className="w-full max-w-md bg-white h-full relative flex flex-col overflow-hidden shadow-2xl">
+      <div className="w-full h-full relative flex flex-col overflow-hidden bg-white">
         {renderLogo()}
         <main className="flex-1 relative overflow-hidden">
           <div key={currentScreen} className="h-full w-full animate-[screenIn_0.3s_ease-out]">
