@@ -1,15 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScanResult } from "../types";
+import { Capacitor } from "@capacitor/core";
+
+/**
+ * Detecta se está rodando em um app nativo (Capacitor) ou na web
+ */
+const isNativePlatform = (): boolean => {
+  return Capacitor.isNativePlatform();
+};
 
 /**
  * Tenta obter a chave de API de múltiplas fontes possíveis no ambiente Vite/Browser
+ * Só é usada no app mobile (nativo)
  */
 const getApiKey = (): string => {
   // @ts-ignore
   return import.meta.env?.VITE_API_KEY || import.meta.env?.API_KEY || process.env?.API_KEY || '';
 };
-
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 const MOSSORO_CONTEXT = `
 DATABASE MOSSORÓ (PONTOS DE COLETA OFICIAIS):
@@ -23,7 +30,30 @@ DATABASE MOSSORÓ (PONTOS DE COLETA OFICIAIS):
 8. COSMÉTICOS/EMBALAGENS: O Boticário (Programa Boti Recicla).
 `;
 
-export const analyzeWasteImage = async (base64Image: string): Promise<ScanResult> => {
+/**
+ * Chama o endpoint serverless /api/analyze (web segura)
+ */
+const analyzeViaServerless = async (base64Image: string): Promise<any> => {
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: base64Image })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Falha ao analisar imagem');
+  }
+
+  return response.json();
+};
+
+/**
+ * Chama a API do Gemini diretamente (app mobile nativo)
+ */
+const analyzeViaDirect = async (base64Image: string): Promise<any> => {
+  const ai = new GoogleGenAI({ apiKey: getApiKey() });
+
   const prompt = `
     Você é um especialista em reciclagem em Mossoró, RN. 
     Analise a imagem e identifique o objeto.
@@ -34,51 +64,57 @@ export const analyzeWasteImage = async (base64Image: string): Promise<ScanResult
     3. Para lixo comum (não reciclável), informe que deve ser descartado na coleta domiciliar comum de Mossoró.
   `;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: { 
-        parts: [
-          { inlineData: { mimeType: "image/jpeg", data: base64Image } }, 
-          { text: prompt }
-        ] 
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            itemName: { 
-              type: Type.STRING,
-              description: "Nome simples do objeto identificado (ex: Garrafa PET, Pilha, Papel)."
-            },
-            material: { 
-              type: Type.STRING,
-              description: "Material principal (ex: Plástico, Metal, Químico)."
-            },
-            recyclability: { 
-              type: Type.STRING,
-              enum: ["Recyclable", "Non-Recyclable", "Organic", "Hazardous"],
-              description: "Categoria de reciclabilidade."
-            },
-            disposalAdvice: { 
-              type: Type.STRING,
-              description: "Instrução de descarte citando o local real em Mossoró."
-            },
-            confidence: { 
-              type: Type.NUMBER,
-              description: "Nível de confiança da análise de 0 a 1."
-            },
+  const response = await ai.models.generateContent({
+    model: "gemini-2.0-flash",
+    contents: {
+      parts: [
+        { inlineData: { mimeType: "image/jpeg", data: base64Image } },
+        { text: prompt }
+      ]
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          itemName: {
+            type: Type.STRING,
+            description: "Nome simples do objeto identificado (ex: Garrafa PET, Pilha, Papel)."
           },
-          required: ["itemName", "material", "recyclability", "disposalAdvice", "confidence"],
-        }
+          material: {
+            type: Type.STRING,
+            description: "Material principal (ex: Plástico, Metal, Químico)."
+          },
+          recyclability: {
+            type: Type.STRING,
+            enum: ["Recyclable", "Non-Recyclable", "Organic", "Hazardous"],
+            description: "Categoria de reciclabilidade."
+          },
+          disposalAdvice: {
+            type: Type.STRING,
+            description: "Instrução de descarte citando o local real em Mossoró."
+          },
+          confidence: {
+            type: Type.NUMBER,
+            description: "Nível de confiança da análise de 0 a 1."
+          },
+        },
+        required: ["itemName", "material", "recyclability", "disposalAdvice", "confidence"],
       }
-    });
+    }
+  });
 
-    const resultText = response.text;
-    if (!resultText) throw new Error("Resposta vazia do modelo");
+  const resultText = response.text;
+  if (!resultText) throw new Error("Resposta vazia do modelo");
+  return JSON.parse(resultText);
+};
 
-    const parsedResult = JSON.parse(resultText);
+export const analyzeWasteImage = async (base64Image: string): Promise<ScanResult> => {
+  try {
+    // Usa serverless na web (seguro), API direta no mobile
+    const parsedResult = isNativePlatform()
+      ? await analyzeViaDirect(base64Image)
+      : await analyzeViaServerless(base64Image);
 
     return {
       id: crypto.randomUUID(),
@@ -88,10 +124,10 @@ export const analyzeWasteImage = async (base64Image: string): Promise<ScanResult
       recyclability: parsedResult.recyclability,
       disposalAdvice: parsedResult.disposalAdvice,
       confidence: parsedResult.confidence,
-      imageUrl: `data:image/jpeg;base64,${base64Image}` 
+      imageUrl: `data:image/jpeg;base64,${base64Image}`
     };
   } catch (error) {
     console.error("Erro na análise Gemini:", error);
-    throw new Error("Não foi possível analisar a imagem. Verifique se o seu arquivo .env contém a VITE_API_KEY corretamente.");
+    throw new Error("Não foi possível analisar a imagem. Tente novamente.");
   }
 };

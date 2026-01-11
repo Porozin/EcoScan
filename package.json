@@ -24,7 +24,8 @@
     "@supabase/supabase-js": "^2.39.7",
     "lucide-react": "^0.562.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "vercel": "^50.1.6"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.0.0",
