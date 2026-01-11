@@ -19,6 +19,12 @@ O aplicativo permite que o usuário **escaneie objetos e resíduos**, obtenha **
 Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada para incentivar hábitos sustentáveis, fortalecer a educação ambiental e contribuir diretamente para o **desenvolvimento sustentável**.
 
 ---
+## Como acessar?
+
+- 🌎 [Site](https://ecoscan1.vercel.app)
+- 👾 [Releases](https://github.com/Porozin/EcoScan/releases)
+
+---
 
 ## 🎯 Objetivos do Projeto
 
