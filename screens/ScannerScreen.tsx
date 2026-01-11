@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, X, Loader2, Info, Image as ImageIcon, User, LogOut, CheckCircle2 } from 'lucide-react';
+import { Camera, X, Loader2, Info, Image as ImageIcon, User, LogOut, CheckCircle2, Flashlight, FlashlightOff } from 'lucide-react';
 import { analyzeWasteImage } from '../services/geminiService';
 import { ScanResult } from '../types';
 import { signInWithGoogle, signOut } from '../services/supabaseClient';
@@ -19,6 +19,8 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
   const [isFlashing, setIsFlashing] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [flashlightOn, setFlashlightOn] = useState(false);
+  const [flashlightAvailable, setFlashlightAvailable] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -39,7 +41,7 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false
       }).catch(() => navigator.mediaDevices.getUserMedia({ video: true, audio: false }));
-      
+
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -55,7 +57,39 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    setFlashlightOn(false);
+    setFlashlightAvailable(false);
   };
+
+  const toggleFlashlight = async () => {
+    if (!stream) return;
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    try {
+      const capabilities = videoTrack.getCapabilities() as any;
+      if (capabilities.torch) {
+        const newState = !flashlightOn;
+        await videoTrack.applyConstraints({
+          advanced: [{ torch: newState } as any]
+        });
+        setFlashlightOn(newState);
+      }
+    } catch (err) {
+      console.error('Flashlight toggle failed:', err);
+    }
+  };
+
+  // Check if flashlight is available when stream changes
+  useEffect(() => {
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        const capabilities = videoTrack.getCapabilities() as any;
+        setFlashlightAvailable(!!capabilities.torch);
+      }
+    }
+  }, [stream]);
 
   const handleCapture = () => {
     const video = videoRef.current;
@@ -156,13 +190,13 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
       <div className="h-full w-full flex flex-col bg-white overflow-hidden animate-[fadeIn_0.3s]">
         <div className="h-1/2 w-full bg-black relative">
           <img src={capturedImage} className="w-full h-full object-cover" alt="Scan" />
-          <button onClick={() => {setResult(null); setCapturedImage(null);}} className="absolute top-6 right-6 p-2 bg-black/40 text-white rounded-full backdrop-blur-sm active:scale-90">
+          <button onClick={() => { setResult(null); setCapturedImage(null); }} className="absolute top-6 right-6 p-2 bg-black/40 text-white rounded-full backdrop-blur-sm active:scale-90">
             <X size={24} />
           </button>
         </div>
         <div className="flex-1 p-8 bg-white -mt-8 rounded-t-[40px] relative shadow-2xl overflow-y-auto">
           <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-          
+
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-3xl font-black text-gray-900 capitalize">{result.itemName}</h2>
             {saveStatus === 'saved' && (
@@ -182,7 +216,7 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
             <p className="text-sm text-eco-900 leading-relaxed font-medium">{result.disposalAdvice}</p>
           </div>
 
-          <button onClick={() => {setResult(null); setCapturedImage(null);}} className="mt-10 mb-24 w-full bg-gray-900 text-white py-5 rounded-2xl font-black active:scale-95 transition-all shadow-xl uppercase text-xs tracking-widest">NOVO SCAN</button>
+          <button onClick={() => { setResult(null); setCapturedImage(null); }} className="mt-10 mb-24 w-full bg-gray-900 text-white py-5 rounded-2xl font-black active:scale-95 transition-all shadow-xl uppercase text-xs tracking-widest">NOVO SCAN</button>
         </div>
       </div>
     );
@@ -205,10 +239,10 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
       {!cameraError ? (
         <div className="h-full w-full relative">
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover opacity-90" />
-          
+
           {/* Botão de Perfil com Indicador de Login */}
-          <button 
-            onClick={() => setShowLoginModal(true)} 
+          <button
+            onClick={() => setShowLoginModal(true)}
             className="absolute top-6 left-6 w-12 h-12 bg-black/30 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center text-white active:scale-90 transition-all z-[110] overflow-hidden"
           >
             {user ? (
@@ -234,22 +268,35 @@ const ScannerScreen: React.FC<ScannerScreenProps> = ({ onScanComplete, isActive,
           )}
 
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <div className="w-72 h-72 border-2 border-white/30 rounded-[50px] relative overflow-hidden shadow-[0_0_0_1000px_rgba(0,0,0,0.4)]">
-                <div className="scanning-line" />
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-eco-500 rounded-tl-2xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-eco-500 rounded-br-2xl" />
-             </div>
+            <div className="w-72 h-72 border-2 border-white/30 rounded-[50px] relative overflow-hidden shadow-[0_0_0_1000px_rgba(0,0,0,0.4)]">
+              <div className="scanning-line" />
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-eco-500 rounded-tl-2xl" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-eco-500 rounded-br-2xl" />
+            </div>
           </div>
-          
+
           <div className="absolute bottom-28 left-0 right-0 flex justify-center items-center pointer-events-none">
-             <button onClick={handleCapture} className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border-4 border-white flex items-center justify-center active:scale-90 transition-all pointer-events-auto">
-                <div className="w-14 h-14 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
-             </button>
+            <button onClick={handleCapture} className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border-4 border-white flex items-center justify-center active:scale-90 transition-all pointer-events-auto">
+              <div className="w-14 h-14 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.3)]" />
+            </button>
           </div>
 
           <button onClick={() => fileInputRef.current?.click()} className="absolute bottom-32 left-8 w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center text-white active:scale-90 pointer-events-auto">
             <ImageIcon size={20} />
           </button>
+
+          {/* Flashlight Toggle Button */}
+          {flashlightAvailable && (
+            <button
+              onClick={toggleFlashlight}
+              className={`absolute bottom-32 right-8 w-12 h-12 backdrop-blur-xl border rounded-2xl flex items-center justify-center active:scale-90 pointer-events-auto transition-all ${flashlightOn
+                  ? 'bg-yellow-400/80 border-yellow-300/50 text-yellow-900'
+                  : 'bg-black/40 border-white/20 text-white'
+                }`}
+            >
+              {flashlightOn ? <Flashlight size={20} /> : <FlashlightOff size={20} />}
+            </button>
+          )}
         </div>
       ) : (
         <div className="h-full flex flex-col items-center justify-center text-white p-10 text-center">
