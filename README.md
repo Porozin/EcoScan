@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://cdn.discordapp.com/attachments/833492504028381184/1458668171690115176/banner2.png?ex=69607a18&is=695f2898&hm=649410b9a3784bbd025e340ec037ea6871c210b26b2a5bfc4bda7db50025f0b0" alt="Banner EcoScan"/>
+  <img src="banner2.png" alt="Banner EcoScan"/>
 </p>
 
 # 🌱 EcoScan
@@ -40,7 +40,7 @@ Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada
 ## 🚀 Funcionalidades Principais
 
 <p align="center">
-  <img src="https://media.discordapp.net/attachments/833492504028381184/1458673600801538212/28_Sem_Titulo_20260108010635.jpg?ex=69607f27&is=695f2da7&hm=e61982578542eff8e3e4f07d592b37ca6b031fbbfbfb340b79dc68875812739b&=&format=webp&width=400&height=866" alt="Banner EcoScan"/>
+  <img src="28_Sem_Titulo_20260108010635.jpg" alt="Banner EcoScan"/>
 </p>
 
 ### 📷 Escaneamento Inteligente
@@ -49,7 +49,7 @@ Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada
 - Informações sobre composição, impacto ambiental e sensibilidade
 
 <p align="center">
-  <img src="https://media.discordapp.net/attachments/833492504028381184/1458673602412019804/Captura_de_tela_de_2026-01-08_00-57-33.png?ex=69607f27&is=695f2da7&hm=57ed7402741f5c5f4dd8a23b75bbabcc4f5bcd2c6019373956945733b8974aed&=&format=webp&quality=lossless" alt="Banner EcoScan"/>
+  <img src="Captura_de_tela_de_2026-01-08_00-57-33.webp" alt="Banner EcoScan"/>
 </p>
 
 ### 🧭 Mapa de Ecopontos
@@ -63,7 +63,7 @@ Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada
 - Acompanhamento do impacto sustentável ao longo do tempo
 
 <p align="center">
-  <img src="https://media.discordapp.net/attachments/833492504028381184/1458673601573027850/Captura_de_tela_de_2026-01-08_00-57-46.png?ex=69607f27&is=695f2da7&hm=7b9800c0844471d46e14cd53a13d5eab303bcc604da504d5f8c0247a8c412676&=&format=webp&quality=lossless" alt="Banner EcoScan"/>
+  <img src="Captura_de_tela_de_2026-01-08_00-57-46.webp" alt="Banner EcoScan"/>
 </p>
 
 ### 📖 Guia de Bolso Ambiental
@@ -87,7 +87,7 @@ Mais do que um app, o EcoScan é uma **ferramenta de conscientização**, criada
 O EcoScan foi pensado para ser **fácil, rápido, intuitivo e agradável**, tornando a educação ambiental algo natural no dia a dia do usuário.
 
 <p align="center">
-  <img src="https://media.discordapp.net/attachments/833492504028381184/1458673602999091352/Captura_de_tela_de_2026-01-08_00-56-29.png?ex=69607f27&is=695f2da7&hm=5f7f2976fe903294676e4ff3737752624f491f203ff53b5ee87d752473c7a5eb&=&format=webp&quality=lossless" alt="Banner EcoScan"/>
+  <img src="Captura_de_tela_de_2026-01-08_00-56-29.webp" alt="Banner EcoScan"/>
 </p>
 
 ---
